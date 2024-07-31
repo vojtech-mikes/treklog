@@ -1,6 +1,7 @@
 package main
 
 import (
+	"html/template"
 	"net/http"
 	"os"
 
@@ -14,9 +15,19 @@ func main() {
 	if port == "" {
 		log.Error("Port env var not set")
 		os.Exit(1)
+	} else {
+		log.Info("Starting server on port", "port", port)
 	}
 
-	http.Handle("/", http.FileServer(http.Dir("./static")))
+	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("assets"))))
+
+	rootHandle := func(w http.ResponseWriter, r *http.Request) {
+		rootPage := template.Must(template.ParseFiles("./site/index.html"))
+		rootPage.Execute(w, nil)
+	}
+
+	http.HandleFunc("/", rootHandle)
+
 	err := http.ListenAndServe(port, nil)
 
 	if err != nil {
